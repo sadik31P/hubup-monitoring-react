@@ -68,7 +68,15 @@ const tableStyle = theme => ({
     lineHeight: "1.42857143",
     padding: "12px 8px",
     verticalAlign: "middle",
-    fontSize: "0.8125rem"
+    fontSize: "0.8525rem",
+  },
+  greenTableCell: {
+    ...defaultFont,
+    lineHeight: "1.42857143",
+    padding: "12px 8px",
+    verticalAlign: "middle",
+    fontSize: "0.8525rem",
+    color:'#4ca750'
   },
   tableResponsive: {
     width: "100%",
@@ -88,6 +96,30 @@ const tableStyle = theme => ({
     display: "table-row",
     outline: "none",
     verticalAlign: "middle"
+  },
+  tableBodyRow404: {
+    height: "48px",
+    color: "inherit",
+    display: "table-row",
+    outline: "none",
+    verticalAlign: "middle",
+    backgroundColor: "#ea464255"
+  },
+  tableBodyRowLag: {
+    height: "48px",
+    color: "inherit",
+    display: "table-row",
+    outline: "none",
+    verticalAlign: "middle",
+    backgroundColor: "#fc950d55"
+  },
+  tableBodyRowOk: {
+    height: "48px",
+    color: "inherit",
+    display: "table-row",
+    outline: "none",
+    verticalAlign: "middle",
+    backgroundColor: "#5db46155"
   }
 });
 

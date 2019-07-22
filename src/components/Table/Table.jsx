@@ -26,6 +26,8 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 // core components
 import tableStyle from "assets/jss/material-dashboard-react/components/tableStyle.jsx";
+import * as moment from "moment";
+
 
 function CustomTable({ ...props }) {
   const { classes, tableHead, tableData, tableHeaderColor } = props;
@@ -49,16 +51,32 @@ function CustomTable({ ...props }) {
           </TableHead>
         ) : null}
         <TableBody>
-          {tableData.map((prop, key) => {
+          {tableData.map((ping, key) => {
+            let cl = classes.tableBodyRow;
+            if(ping.responseCode !== 200)
+              cl =  classes.tableBodyRow404;
+            else if(ping.latency > 2000)
+              cl =  classes.tableBodyRowLag;
             return (
-              <TableRow key={key} className={classes.tableBodyRow}>
-                {prop.map((prop, key) => {
-                  return (
-                    <TableCell className={classes.tableCell} key={key}>
-                      {prop}
-                    </TableCell>
-                  );
-                })}
+              <TableRow key={key} className={cl}>
+                <TableCell className={classes.tableCell} key={key}>
+                  {ping.server.name}
+                </TableCell>
+                <TableCell className={classes.tableCell} key={key}>
+                  {ping.server.address}
+                </TableCell>
+                <TableCell className={classes.tableCell} key={key}>
+                  {moment(ping.dateTime).format("HH:mm:ss")}
+                </TableCell>
+                <TableCell className={ping.responseCode === 200 ? classes.greenTableCell : classes.tableCell} key={key}>
+                  {ping.responseCode}
+                </TableCell>
+                <TableCell className={classes.tableCell} key={key}>
+                  ----
+                </TableCell>
+                <TableCell className={classes.tableCell} key={key}>
+                  {ping.latency} ms
+                </TableCell>
               </TableRow>
             );
           })}
@@ -67,6 +85,7 @@ function CustomTable({ ...props }) {
     </div>
   );
 }
+
 
 CustomTable.defaultProps = {
   tableHeaderColor: "gray"

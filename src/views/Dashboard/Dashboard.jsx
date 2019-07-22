@@ -57,11 +57,19 @@ import {
 } from "variables/charts.jsx";
 
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
+import DashboardApi from "./api/DashboardApi";
 
 class Dashboard extends React.Component {
   state = {
-    value: 0
+    value: 0,
+    tableData: [],
+    runningServers: '-',
+    downServers: '-',
+    totalServers: '-',
+    laggingServers: '-',
+    ceobusUnparsedFiles: '-',
   };
+
   handleChange = (event, value) => {
     this.setState({ value });
   };
@@ -69,6 +77,41 @@ class Dashboard extends React.Component {
   handleChangeIndex = index => {
     this.setState({ value: index });
   };
+
+  componentDidMount(): void {
+    this.loadLoop()
+    // setInterval(() => {this.loadLoop()},2000)
+      //
+  }
+
+  loadLoop(){
+
+    DashboardApi.getPings().then(res => {this.sortPing(res);}).catch(err => console.log(err));
+    DashboardApi.getTotalRunningServers().then(res => this.setState({runningServers:res})).catch(err => console.log(err));
+    DashboardApi.getTotalDownServers().then(res => this.setState({downServers:res})).catch(err => console.log(err));
+    DashboardApi.getTotalServers().then(res => this.setState({totalServers:res})).catch(err => console.log(err));
+    DashboardApi.getLaggingServers().then(res => this.setState({laggingServers:res})).catch(err => console.log(err));
+    DashboardApi.getCeoBusUnparsedFiles().then(res => this.setState({ceobusUnparsedFiles:res})).catch(err => console.log(err));
+    // ;
+  }
+
+  sortPing(res){
+    res.sort(function(a, b) {
+
+      if (a.responseCode > b.responseCode) {
+        return -1;
+      }
+      if (a.responseCode < b.responseCode) {
+        return 1;
+      }
+      if(a.latency > b.latency)
+        return -1;
+      if(a.latency < b.latency)
+        return 1;
+    });
+    this.setState({tableData:res})
+  }
+
   render() {
     const { classes } = this.props;
     return (
@@ -76,78 +119,84 @@ class Dashboard extends React.Component {
         <GridContainer>
           <GridItem xs={12} sm={6} md={3}>
             <Card>
-              <CardHeader color="warning" stats icon>
-                <CardIcon color="warning">
-                  <Icon>content_copy</Icon>
+              <CardHeader color={this.state.ceobusUnparsedFiles > 0 ? "danger" : "info"} stats icon>
+                <CardIcon color={this.state.ceobusUnparsedFiles > 0 ? "danger" : "info"}>
+                  <Icon style={{}}>file_copy</Icon>
                 </CardIcon>
-                <p className={classes.cardCategory}>Used Space</p>
-                <h3 className={classes.cardTitle}>
-                  49/50 <small>GB</small>
-                </h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <Danger>
-                    <Warning />
-                  </Danger>
-                  <a href="#pablo" onClick={e => e.preventDefault()}>
-                    Get more space
-                  </a>
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
-            <Card>
-              <CardHeader color="success" stats icon>
-                <CardIcon color="success">
-                  <Store />
-                </CardIcon>
-                <p className={classes.cardCategory}>Revenue</p>
-                <h3 className={classes.cardTitle}>$34,245</h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <DateRange />
-                  Last 24 Hours
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
-            <Card>
-              <CardHeader color="danger" stats icon>
-                <CardIcon color="danger">
-                  <Icon>info_outline</Icon>
-                </CardIcon>
-                <p className={classes.cardCategory}>Fixed Issues</p>
-                <h3 className={classes.cardTitle}>75</h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <LocalOffer />
-                  Tracked from Github
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
-            <Card>
-              <CardHeader color="info" stats icon>
-                <CardIcon color="info">
-                  <Accessibility />
-                </CardIcon>
-                <p className={classes.cardCategory}>Followers</p>
-                <h3 className={classes.cardTitle}>+245</h3>
+                <p className={classes.cardCategory}>CEOBUS unparsed Files</p>
+                <h3 className={classes.cardTitle}>{this.state.ceobusUnparsedFiles}</h3>
               </CardHeader>
               <CardFooter stats>
                 <div className={classes.stats}>
                   <Update />
-                  Just Updated
+                  Total files in the ftp root directory
                 </div>
               </CardFooter>
             </Card>
           </GridItem>
+
+
+
+          <GridItem xs={12} sm={6} md={3}>
+            <Card>
+              <CardHeader color={this.state.downServers > 0 ? "danger" : "info"} stats icon>
+                <CardIcon color={this.state.downServers > 0 ? "danger" : "info"}>
+                  <Icon>info_outline</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Down Servers</p>
+                <h3 className={classes.cardTitle}>{this.state.downServers+'/'+this.state.totalServers}</h3>
+              </CardHeader>
+              <CardFooter stats>
+                <div className={classes.stats}>
+                  <LocalOffer />
+                  Servers with response code not equal to 200
+                </div>
+              </CardFooter>
+            </Card>
+          </GridItem>
+
+
+
+          <GridItem xs={12} sm={6} md={3}>
+            <Card>
+              <CardHeader color="success" stats icon>
+                <CardIcon color="success">
+                  <Icon style={{}}>developer_board</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Running Servers</p>
+                <h3 className={classes.cardTitle}>{this.state.runningServers+'/'+this.state.totalServers}</h3>
+              </CardHeader>
+              <CardFooter stats>
+                <div className={classes.stats}>
+                  <DateRange />
+                  Servers with response code equal to 200
+                </div>
+              </CardFooter>
+            </Card>
+          </GridItem>
+
+
+
+          <GridItem xs={12} sm={6} md={3}>
+            <Card>
+              <CardHeader color={this.state.downServers > 0 ? "warning" : "info"} stats icon>
+                <CardIcon color={this.state.downServers > 0 ? "warning" : "info"}>
+                  <Icon>warning</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Lagging Servers</p>
+                <h3 className={classes.cardTitle}>{this.state.laggingServers+'/'+this.state.totalServers}</h3>
+              </CardHeader>
+              <CardFooter stats>
+                <div className={classes.stats}>
+                  <DateRange />
+                  Servers with response time higher than 2 seconds
+                </div>
+              </CardFooter>
+            </Card>
+          </GridItem>
+
+
+
         </GridContainer>
 
 
@@ -156,23 +205,16 @@ class Dashboard extends React.Component {
           <GridItem xs={12} sm={12} md={12}>
             <Card>
               <CardHeader color="primary">
-                <h4 className={classes.cardTitleWhite}>Simple Table</h4>
+                <h4 className={classes.cardTitleWhite}>Ping Table</h4>
                 <p className={classes.cardCategoryWhite}>
-                  Here is a subtitle for this table
+                  Real-Time table that keeps track of Hubup's proxy servers
                 </p>
               </CardHeader>
               <CardBody>
                 <Table
                     tableHeaderColor="primary"
-                    tableHead={["Name", "Country", "City", "Salary"]}
-                    tableData={[
-                      ["Dakota Rice", "Niger", "Oud-Turnhout", "$36,738"],
-                      ["Minerva Hooper", "Curaçao", "Sinaai-Waas", "$23,789"],
-                      ["Sage Rodriguez", "Netherlands", "Baileux", "$56,142"],
-                      ["Philip Chaney", "Korea, South", "Overland Park", "$38,735"],
-                      ["Doris Greene", "Malawi", "Feldkirchen in Kärnten", "$63,542"],
-                      ["Mason Porter", "Chile", "Gloucester", "$78,615"]
-                    ]}
+                    tableHead={["server", "address", "time","response", "status", "latency (ms)"]}
+                    tableData={this.state.tableData}
                 />
               </CardBody>
             </Card>
@@ -305,26 +347,26 @@ class Dashboard extends React.Component {
             />
           </GridItem>
           <GridItem xs={12} sm={12} md={6}>
-            <Card>
-              <CardHeader color="warning">
-                <h4 className={classes.cardTitleWhite}>Employees Stats</h4>
-                <p className={classes.cardCategoryWhite}>
-                  New employees on 15th September, 2016
-                </p>
-              </CardHeader>
-              <CardBody>
-                <Table
-                  tableHeaderColor="warning"
-                  tableHead={["ID", "Name", "Salary", "Country"]}
-                  tableData={[
-                    ["1", "Dakota Rice", "$36,738", "Niger"],
-                    ["2", "Minerva Hooper", "$23,789", "Curaçao"],
-                    ["3", "Sage Rodriguez", "$56,142", "Netherlands"],
-                    ["4", "Philip Chaney", "$38,735", "Korea, South"]
-                  ]}
-                />
-              </CardBody>
-            </Card>
+            {/*<Card>*/}
+            {/*  <CardHeader color="warning">*/}
+            {/*    <h4 className={classes.cardTitleWhite}>Employees Stats</h4>*/}
+            {/*    <p className={classes.cardCategoryWhite}>*/}
+            {/*      New employees on 15th September, 2016*/}
+            {/*    </p>*/}
+            {/*  </CardHeader>*/}
+            {/*  <CardBody>*/}
+            {/*    <Table*/}
+            {/*      tableHeaderColor="warning"*/}
+            {/*      tableHead={["ID", "Name", "Salary", "Country"]}*/}
+            {/*      tableData={[*/}
+            {/*        ["1", "Dakota Rice", "$36,738", "Niger"],*/}
+            {/*        ["2", "Minerva Hooper", "$23,789", "Curaçao"],*/}
+            {/*        ["3", "Sage Rodriguez", "$56,142", "Netherlands"],*/}
+            {/*        ["4", "Philip Chaney", "$38,735", "Korea, South"]*/}
+            {/*      ]}*/}
+            {/*    />*/}
+            {/*  </CardBody>*/}
+            {/*</Card>*/}
           </GridItem>
         </GridContainer>
 

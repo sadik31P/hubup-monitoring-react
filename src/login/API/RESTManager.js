@@ -168,14 +168,14 @@ export class RESTManager {
 
 
            if(error.response.status === 401 || error.response.status === '401'){
-               global.emitter.emit('AUTHGUARD_MUST_LOGOUT');
+               // global.emitter.emit('AUTHGUARD_MUST_LOGOUT');
                // global.emitter.emit('showSnackBar',
                //     {
                //         title:Texts.getText('post_notification_success_snackbar_title'),
                //         body:Texts.getText('post_notification_success_snackbar_body'),
                //         type:'success'
                //     });
-               global.emitter.emit('wipeJWT');
+               // global.emitter.emit('wipeJWT');
            }
 
         }

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import './AuthenticationControl.css';
 
 //Material modules
@@ -12,7 +12,6 @@ import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import hubup_logo_v2 from './../../assets/img/logo_hubup_squared_v2.svg';
 import {Texts} from "./AuthenticationControl.texts"
 import {LoginAPI} from "./API/LoginAPI";
-import CredentialsStorage from "../sharedCore/entities/CredentialsStorage";
 
 
 export class LoginForm extends React.Component {
@@ -186,22 +185,11 @@ export class LoginForm extends React.Component {
             showCredentialsError:false
         });
         LoginAPI.login(this.state.username, this.state.password)
-            .then((user)=>{
-                CredentialsStorage.storeCredentials(this.state.username,this.state.password)
-                    .then(()=>{console.log('User credentials have been stored')});
+            .then((response)=>{
+                this.props.history.push('/admin/dashboard');
                 this.setState({
-                    authenticatingUser:false,
-                },()=>{
-                    console.log('User is now logged');
-
-
-                    global.emitter.emit('refreshUi');
-                    window.location.reload();
-
-                    this.setState({
-                        displayLoginPopup:false
-                    })
-                });
+                    displayLoginPopup:false
+                })
             })
             .catch((error)=>{
                 console.log(error);
