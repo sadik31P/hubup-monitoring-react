@@ -85,6 +85,17 @@ export default class dashboardApi {
         });
     };
 
+    static getActiveUsersForToday() : Promise<>  {
+        return new Promise((resolve, reject) => {
+            RESTManager.get(FOSRouter.getRoute('api_server_get_todays_users'))
+                .then((response: any) => { resolve(response.data) })
+                .catch((error:any) => {
+                    console.log("dashboardApi::getActiveUsersForToday() :: " + error);
+                    reject("dashboardApi::getActiveUsersForToday() :: " + error);
+                })
+        });
+    };
+
 
 
 }

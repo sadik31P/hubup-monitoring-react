@@ -47,6 +47,7 @@ import CardHeader from "components/Card/CardHeader.jsx";
 import CardIcon from "components/Card/CardIcon.jsx";
 import CardBody from "components/Card/CardBody.jsx";
 import CardFooter from "components/Card/CardFooter.jsx";
+import "./a.css";
 
 import { bugs, website, server } from "variables/general.jsx";
 
@@ -68,6 +69,8 @@ class Dashboard extends React.Component {
     totalServers: '-',
     laggingServers: '-',
     ceobusUnparsedFiles: '-',
+    todaysActiveUsersLabels:[],
+    todaysActiveUsersData:[]
   };
 
   handleChange = (event, value) => {
@@ -79,8 +82,9 @@ class Dashboard extends React.Component {
   };
 
   componentDidMount(): void {
+    this.loadOneTime()
     this.loadLoop()
-    // setInterval(() => {this.loadLoop()},2000)
+    setInterval(() => {this.loadLoop()},60000)
       //
   }
 
@@ -93,6 +97,18 @@ class Dashboard extends React.Component {
     DashboardApi.getLaggingServers().then(res => this.setState({laggingServers:res})).catch(err => console.log(err));
     DashboardApi.getCeoBusUnparsedFiles().then(res => this.setState({ceobusUnparsedFiles:res})).catch(err => console.log(err));
     // ;
+  }
+
+  loadOneTime(){
+    DashboardApi.getActiveUsersForToday().then(res => {
+      let labels = [];
+      let data = [];
+      res.map(row => {
+        labels.push(row.server);
+        data.push(row.active);
+      })
+      this.setState({todaysActiveUsersLabels:labels,todaysActiveUsersData:data })
+    }).catch(err => console.log(err));
   }
 
   sortPing(res){
@@ -111,6 +127,15 @@ class Dashboard extends React.Component {
     });
     this.setState({tableData:res})
   }
+  
+  getTodaysUsers(){
+    console.log(this.state.todaysActiveUsersLabels,)
+    console.log(this.state.todaysActiveUsersData,)
+    return {
+      labels: this.state.todaysActiveUsersLabels,
+      series: [this.state.todaysActiveUsersData]
+    };
+  }
 
   render() {
     const { classes } = this.props;
@@ -119,8 +144,8 @@ class Dashboard extends React.Component {
         <GridContainer>
           <GridItem xs={12} sm={6} md={3}>
             <Card>
-              <CardHeader color={this.state.ceobusUnparsedFiles > 0 ? "danger" : "info"} stats icon>
-                <CardIcon color={this.state.ceobusUnparsedFiles > 0 ? "danger" : "info"}>
+              <CardHeader color={this.state.ceobusUnparsedFiles !== 0 ? "danger" : "info"} stats icon>
+                <CardIcon color={this.state.ceobusUnparsedFiles !== 0 ? "danger" : "info"}>
                   <Icon style={{}}>file_copy</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>CEOBUS unparsed Files</p>
@@ -139,8 +164,8 @@ class Dashboard extends React.Component {
 
           <GridItem xs={12} sm={6} md={3}>
             <Card>
-              <CardHeader color={this.state.downServers > 0 ? "danger" : "info"} stats icon>
-                <CardIcon color={this.state.downServers > 0 ? "danger" : "info"}>
+              <CardHeader color={this.state.downServers !== 0 ? "danger" : "info"} stats icon>
+                <CardIcon color={this.state.downServers !== 0 ? "danger" : "info"}>
                   <Icon>info_outline</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Down Servers</p>
@@ -179,8 +204,8 @@ class Dashboard extends React.Component {
 
           <GridItem xs={12} sm={6} md={3}>
             <Card>
-              <CardHeader color={this.state.downServers > 0 ? "warning" : "info"} stats icon>
-                <CardIcon color={this.state.downServers > 0 ? "warning" : "info"}>
+              <CardHeader color={this.state.laggingServers !== 0 ? "warning" : "info"} stats icon>
+                <CardIcon color={this.state.laggingServers !== 0 ? "warning" : "info"}>
                   <Icon>warning</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Lagging Servers</p>
@@ -224,7 +249,7 @@ class Dashboard extends React.Component {
 
 
         <GridContainer>
-          <GridItem xs={12} sm={12} md={4}>
+          <GridItem xs={12} sm={12} md={6}>
             <Card chart>
               <CardHeader color="success">
                 <ChartistGraph
@@ -232,7 +257,7 @@ class Dashboard extends React.Component {
                   data={dailySalesChart.data}
                   type="Line"
                   options={dailySalesChart.options}
-                  listener={dailySalesChart.animation}
+                  // listener={dailySalesChart.animation}
                 />
               </CardHeader>
               <CardBody>
@@ -251,32 +276,38 @@ class Dashboard extends React.Component {
               </CardFooter>
             </Card>
           </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
+
+
+
+          <GridItem xs={12} sm={12} md={6}>
             <Card chart>
               <CardHeader color="warning">
                 <ChartistGraph
                   className="ct-chart"
-                  data={emailsSubscriptionChart.data}
+                  data={this.getTodaysUsers()}
                   type="Bar"
                   options={emailsSubscriptionChart.options}
                   responsiveOptions={emailsSubscriptionChart.responsiveOptions}
-                  listener={emailsSubscriptionChart.animation}
+                  // listener={emailsSubscriptionChart.animation}
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Email Subscriptions</h4>
+                <h4 className={classes.cardTitle}>Today's active users for each server</h4>
                 <p className={classes.cardCategory}>
-                  Last Campaign Performance
+                  2019-02-24
                 </p>
               </CardBody>
               <CardFooter chart>
                 <div className={classes.stats}>
-                  <AccessTime /> campaign sent 2 days ago
+                  <AccessTime /> last update at 10:25:33
                 </div>
               </CardFooter>
             </Card>
           </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
+
+
+
+          <GridItem xs={12} sm={12} md={6}>
             <Card chart>
               <CardHeader color="danger">
                 <ChartistGraph
@@ -284,7 +315,7 @@ class Dashboard extends React.Component {
                   data={completedTasksChart.data}
                   type="Line"
                   options={completedTasksChart.options}
-                  listener={completedTasksChart.animation}
+                  // listener={completedTasksChart.animation}
                 />
               </CardHeader>
               <CardBody>
