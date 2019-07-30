@@ -298,11 +298,11 @@ class Dashboard extends React.Component {
                 </p>
               </CardHeader>
               <CardBody>
-                {/*<Table*/}
-                {/*    tableHeaderColor="primary"*/}
-                {/*    tableHead={["server", "address", "time","response", "status", "latency (ms)"]}*/}
-                {/*    tableData={this.state.tableData}*/}
-                {/*/>*/}
+                <Table
+                    tableHeaderColor="primary"
+                    tableHead={["server", "address", "time","response", "status", "latency (ms)"]}
+                    tableData={this.state.tableData}
+                />
               </CardBody>
             </Card>
           </GridItem>
