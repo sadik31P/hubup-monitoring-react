@@ -96,6 +96,39 @@ export default class dashboardApi {
         });
     };
 
+    static getWeeklyDownTimeForAllServers(dateTime) : Promise<>  {
+        return new Promise((resolve, reject) => {
+            RESTManager.get(FOSRouter.getRoute('api_ping_get_weekly_down_servers',{dateTime:dateTime}))
+                .then((response: any) => { resolve(response.data) })
+                .catch((error:any) => {
+                    console.log("dashboardApi::getWeeklyDownTimeForAllServers() :: " + error);
+                    reject("dashboardApi::getWeeklyDownTimeForAllServers() :: " + error);
+                })
+        });
+    };
+
+    static getMonthlyDownTimeForServer(dateTime, server) : Promise<>  {
+        return new Promise((resolve, reject) => {
+            RESTManager.get(FOSRouter.getRoute('api_ping_get_daily_total_stats',{dateTime:dateTime, server: server}))
+                .then((response: any) => { resolve(response.data) })
+                .catch((error:any) => {
+                    console.log("dashboardApi::getMonthlyDownTimeForServer() :: " + error);
+                    reject("dashboardApi::getMonthlyDownTimeForServer() :: " + error);
+                })
+        });
+    };
+
+    static getDailyDownTimeForServer(dateTime, server) : Promise<>  {
+        return new Promise((resolve, reject) => {
+            RESTManager.get(FOSRouter.getRoute('api_ping_get_hourly_stats',{dateTime:dateTime, server: server}))
+                .then((response: any) => { resolve(response.data) })
+                .catch((error:any) => {
+                    console.log("dashboardApi::getMonthlyDownTimeForServer() :: " + error);
+                    reject("dashboardApi::getMonthlyDownTimeForServer() :: " + error);
+                })
+        });
+    };
+
 
 
 }

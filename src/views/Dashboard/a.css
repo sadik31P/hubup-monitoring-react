@@ -9,3 +9,9 @@ svg.ct-chart-bar, svg.ct-chart-line{
     transform: translate(-100%) rotate(-45deg);
     white-space:nowrap;
 }
+
+.special-outlined-right fieldset{
+    margin-right:-1px;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}

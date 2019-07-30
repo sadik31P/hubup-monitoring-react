@@ -48,6 +48,9 @@ import CardIcon from "components/Card/CardIcon.jsx";
 import CardBody from "components/Card/CardBody.jsx";
 import CardFooter from "components/Card/CardFooter.jsx";
 import "./a.css";
+import {DatePicker, MuiPickersUtilsProvider} from '@material-ui/pickers';
+import MomentUtils from '@date-io/moment';
+
 
 import { bugs, website, server } from "variables/general.jsx";
 
@@ -59,6 +62,13 @@ import {
 
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
 import DashboardApi from "./api/DashboardApi";
+import moment from "moment";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import OutlinedInput from "@material-ui/core/OutlinedInput";
+import MenuItem from "@material-ui/core/MenuItem";
+
 
 class Dashboard extends React.Component {
   state = {
@@ -69,8 +79,17 @@ class Dashboard extends React.Component {
     totalServers: '-',
     laggingServers: '-',
     ceobusUnparsedFiles: '-',
-    todaysActiveUsersLabels:[],
-    todaysActiveUsersData:[]
+    weeklyDownTimeLabels:[],
+    weeklyDownTimeData:[],
+    monthlyDownTimeLabels:[],
+    monthlyDownTimeData:[],
+    dailyDownTimeLabels:[],
+    dailyDownTimeData:[],
+    allServers:[],
+    selectedServerMonthly: null,
+    selectedDateDaily:moment(),
+    selectedServerDaily:null,
+
   };
 
   handleChange = (event, value) => {
@@ -100,14 +119,59 @@ class Dashboard extends React.Component {
   }
 
   loadOneTime(){
-    DashboardApi.getActiveUsersForToday().then(res => {
+    this.weeklyAllServers();
+    DashboardApi.getServers().then(res => {{
+      this.setState({allServers:res},() => {
+        if(this.state.allServers.length > 0) {
+          this.monthlyServer(this.state.allServers[0].id);
+          this.dailyDown(moment(), this.state.allServers[0].id);
+          this.setState({selectedServerMonthly:this.state.allServers[0].id,selectedServerDaily:this.state.allServers[0].id})
+        }
+      })
+    }}).catch(err => console.log(err));
+  }
+  
+  weeklyAllServers(){
+    DashboardApi.getWeeklyDownTimeForAllServers(moment().format("YYYY-MM-DD")).then(res => {
       let labels = [];
       let data = [];
       res.map(row => {
-        labels.push(row.server);
-        data.push(row.active);
-      })
-      this.setState({todaysActiveUsersLabels:labels,todaysActiveUsersData:data })
+        labels.push(row.name);
+        data.push(row.minutes);
+      });
+      this.setState({weeklyDownTimeLabels:labels,weeklyDownTimeData:data })
+    }).catch(err => console.log(err));
+  }
+
+  monthlyServer(serverId){
+    console.log(moment().format("YYYY-MM-DD"))
+    DashboardApi.getMonthlyDownTimeForServer(moment().format("YYYY-MM-DD"), serverId).then(res => {
+      let labels = [];
+      let data = [];
+      for (let i = 0; i < 30; i++) {
+        let d = moment().subtract(i,'days').format("YYYY-MM-DD");
+        let lol = res.filter(function (el) {
+          return el.date === d;
+        });
+        labels.push(moment(d).format("MMM Do"));
+        data.push(lol.length > 0 ? parseInt(lol[0]['total']) : 0);
+      }
+      labels.reverse();
+      data.reverse();
+
+      this.setState({monthlyDownTimeLabels:labels,monthlyDownTimeData:data })
+    }).catch(err => console.log(err));
+  }
+
+  dailyDown(date,serverId){
+    DashboardApi.getDailyDownTimeForServer(moment(date).format("YYYY-MM-DD"), serverId).then(res => {
+      let labels = [];
+      let data = [];
+      res.map(el => {
+        labels.push(moment(el.time_end).format('HH:mm'))
+        data.push(el.total)
+      });
+      this.setState({dailyDownTimeLabels:labels,dailyDownTimeData:data })
     }).catch(err => console.log(err));
   }
 
@@ -128,12 +192,10 @@ class Dashboard extends React.Component {
     this.setState({tableData:res})
   }
   
-  getTodaysUsers(){
-    console.log(this.state.todaysActiveUsersLabels,)
-    console.log(this.state.todaysActiveUsersData,)
+  getWeeklyDownData(){
     return {
-      labels: this.state.todaysActiveUsersLabels,
-      series: [this.state.todaysActiveUsersData]
+      labels: this.state.weeklyDownTimeLabels,
+      series: [this.state.weeklyDownTimeData]
     };
   }
 
@@ -236,11 +298,11 @@ class Dashboard extends React.Component {
                 </p>
               </CardHeader>
               <CardBody>
-                <Table
-                    tableHeaderColor="primary"
-                    tableHead={["server", "address", "time","response", "status", "latency (ms)"]}
-                    tableData={this.state.tableData}
-                />
+                {/*<Table*/}
+                {/*    tableHeaderColor="primary"*/}
+                {/*    tableHead={["server", "address", "time","response", "status", "latency (ms)"]}*/}
+                {/*    tableData={this.state.tableData}*/}
+                {/*/>*/}
               </CardBody>
             </Card>
           </GridItem>
@@ -248,26 +310,71 @@ class Dashboard extends React.Component {
 
 
 
+        <GridItem xs={12} sm={12} md={12}>
+          <Card chart>
+            <CardHeader color="warning">
+              <ChartistGraph
+                  className="ct-chart"
+                  data={this.getWeeklyDownData()}
+                  type="Bar"
+                  options={emailsSubscriptionChart.options}
+                  responsiveOptions={emailsSubscriptionChart.responsiveOptions}
+                  // listener={emailsSubscriptionChart.animation}
+              />
+            </CardHeader>
+            <CardBody>
+              <h4 className={classes.cardTitle}>Weekly down time for each server (minutes)</h4>
+              <p className={classes.cardCategory}>
+                2019-02-24
+              </p>
+            </CardBody>
+            <CardFooter chart>
+              <div className={classes.stats}>
+                <AccessTime /> last update at 10:25:33
+              </div>
+            </CardFooter>
+          </Card>
+        </GridItem>
+
+
+
+
         <GridContainer>
-          <GridItem xs={12} sm={12} md={6}>
+          <GridItem xs={12} sm={12} md={12}>
             <Card chart>
               <CardHeader color="success">
                 <ChartistGraph
-                  className="ct-chart"
-                  data={dailySalesChart.data}
-                  type="Line"
-                  options={dailySalesChart.options}
-                  // listener={dailySalesChart.animation}
+                    className="ct-chart"
+                    data={{ labels: this.state.monthlyDownTimeLabels,
+                      series: [this.state.monthlyDownTimeData]}}
+                    type="Line"
+                    options={dailySalesChart.options}
+                    // listener={dailySalesChart.animation}
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Daily Sales</h4>
-                <p className={classes.cardCategory}>
-                  <span className={classes.successText}>
-                    <ArrowUpward className={classes.upArrowCardCategory} /> 55%
-                  </span>{" "}
-                  increase in today sales.
-                </p>
+                <h4 className={classes.cardTitle} style={{display:"inline"}}>Monthly down time for </h4>
+                <FormControl variant="outlined" className={classes.formControl}>
+                  <Select
+                      style={{display:"inline", marginLeft:15,  width:150}}
+                      value={this.state.selectedServerMonthly}
+                      onChange={(e) => {
+                        this.setState({selectedServerMonthly:e.target.value},
+                            () => this.monthlyServer(this.state.selectedServerMonthly)
+                        )
+                      }}
+                      input={<OutlinedInput  name="age" id="outlined-age-simple" />}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {this.state.allServers.map(el => {
+                      return <MenuItem value={el.id}>{el.name}</MenuItem>
+                    })}
+
+                  </Select>
+                </FormControl>
+                <h4 style={{display:"inline", marginLeft:15}}>(minutes)</h4>
               </CardBody>
               <CardFooter chart>
                 <div className={classes.stats}>
@@ -279,27 +386,80 @@ class Dashboard extends React.Component {
 
 
 
-          <GridItem xs={12} sm={12} md={6}>
+
+
+
+
+
+          <GridItem xs={12} sm={12} md={12}>
             <Card chart>
-              <CardHeader color="warning">
+              <CardHeader color="success">
                 <ChartistGraph
-                  className="ct-chart"
-                  data={this.getTodaysUsers()}
-                  type="Bar"
-                  options={emailsSubscriptionChart.options}
-                  responsiveOptions={emailsSubscriptionChart.responsiveOptions}
-                  // listener={emailsSubscriptionChart.animation}
+                    className="ct-chart"
+                    data={{ labels: this.state.dailyDownTimeLabels,
+                      series: [this.state.dailyDownTimeData]}}
+                    type="Line"
+                    options={dailySalesChart.options}
+                    // listener={dailySalesChart.animation}
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Today's active users for each server</h4>
-                <p className={classes.cardCategory}>
-                  2019-02-24
-                </p>
+                <h4 className={classes.cardTitle} style={{display:"inline"}}>Hourly down time for </h4>
+                <FormControl variant="outlined" className={classes.formControl}>
+                  <Select
+                      style={{display:"inline", marginLeft:15, width:150}}
+                      value={this.state.selectedServerDaily}
+                      onChange={(e) => {
+                        this.setState({selectedServerDaily:e.target.value},
+                            () => this.dailyDown(this.state.selectedDateDaily, this.state.selectedServerDaily)
+                        )
+                      }}
+
+                      input={<OutlinedInput  name="age" id="outlined-age-simple" />}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {this.state.allServers.map(el => {
+                      return <MenuItem value={el.id}>{el.name}</MenuItem>
+                    })}
+                  </Select>
+                </FormControl>
+                <h4 style={{display:"inline", marginLeft:15, marginRight:15, verticalAlign:"middle"}}>in</h4>
+
+                <MuiPickersUtilsProvider utils={MomentUtils} style={{ marginLeft:15,display:"inline"}}>
+
+                  <FormControl className={"special-outlined-right"}>
+                    <DatePicker
+                        style={{backgroundColor: '#FAFAFA', marginTop: 3}}
+                        //label="Date de début"
+                        emptyLabel="DD/MM/YYYY"
+                        placeholder="DD/MM/YYYY"
+                        value={this.state.selectedDateDaily}
+                        variant="outlined"
+                        cancelLabel={"Annuler"}
+                        okLabel={"Valider"}
+                        onChange={(date) => {this.setState({selectedDateDaily: date},() => this.dailyDown(this.state.selectedDateDaily, this.state.selectedServerDaily))}}
+                        format={"dddd DD MMMM YYYY"}
+                        todayLabel={"Aujourd'hui"}
+                        maxDate={moment()}
+                        ref={node => {
+                          this.endDatePicker = node;
+                        }}
+                        InputProps={{
+                          style: {
+                            height: 38,
+                          }
+                        }}
+                    />
+                  </FormControl>
+                </MuiPickersUtilsProvider>
+
+
               </CardBody>
               <CardFooter chart>
                 <div className={classes.stats}>
-                  <AccessTime /> last update at 10:25:33
+                  <AccessTime /> updated 4 minutes ago
                 </div>
               </CardFooter>
             </Card>
@@ -307,100 +467,7 @@ class Dashboard extends React.Component {
 
 
 
-          <GridItem xs={12} sm={12} md={6}>
-            <Card chart>
-              <CardHeader color="danger">
-                <ChartistGraph
-                  className="ct-chart"
-                  data={completedTasksChart.data}
-                  type="Line"
-                  options={completedTasksChart.options}
-                  // listener={completedTasksChart.animation}
-                />
-              </CardHeader>
-              <CardBody>
-                <h4 className={classes.cardTitle}>Completed Tasks</h4>
-                <p className={classes.cardCategory}>
-                  Last Campaign Performance
-                </p>
-              </CardBody>
-              <CardFooter chart>
-                <div className={classes.stats}>
-                  <AccessTime /> campaign sent 2 days ago
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
         </GridContainer>
-
-
-
-        <GridContainer>
-          <GridItem xs={12} sm={12} md={6}>
-            <CustomTabs
-              title="Tasks:"
-              headerColor="primary"
-              tabs={[
-                {
-                  tabName: "Bugs",
-                  tabIcon: BugReport,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[0, 3]}
-                      tasksIndexes={[0, 1, 2, 3]}
-                      tasks={bugs}
-                    />
-                  )
-                },
-                {
-                  tabName: "Website",
-                  tabIcon: Code,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[0]}
-                      tasksIndexes={[0, 1]}
-                      tasks={website}
-                    />
-                  )
-                },
-                {
-                  tabName: "Server",
-                  tabIcon: Cloud,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[1]}
-                      tasksIndexes={[0, 1, 2]}
-                      tasks={server}
-                    />
-                  )
-                }
-              ]}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={6}>
-            {/*<Card>*/}
-            {/*  <CardHeader color="warning">*/}
-            {/*    <h4 className={classes.cardTitleWhite}>Employees Stats</h4>*/}
-            {/*    <p className={classes.cardCategoryWhite}>*/}
-            {/*      New employees on 15th September, 2016*/}
-            {/*    </p>*/}
-            {/*  </CardHeader>*/}
-            {/*  <CardBody>*/}
-            {/*    <Table*/}
-            {/*      tableHeaderColor="warning"*/}
-            {/*      tableHead={["ID", "Name", "Salary", "Country"]}*/}
-            {/*      tableData={[*/}
-            {/*        ["1", "Dakota Rice", "$36,738", "Niger"],*/}
-            {/*        ["2", "Minerva Hooper", "$23,789", "Curaçao"],*/}
-            {/*        ["3", "Sage Rodriguez", "$56,142", "Netherlands"],*/}
-            {/*        ["4", "Philip Chaney", "$38,735", "Korea, South"]*/}
-            {/*      ]}*/}
-            {/*    />*/}
-            {/*  </CardBody>*/}
-            {/*</Card>*/}
-          </GridItem>
-        </GridContainer>
-
 
       </div>
     );
