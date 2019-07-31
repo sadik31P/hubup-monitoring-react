@@ -325,12 +325,12 @@ class Dashboard extends React.Component {
             <CardBody>
               <h4 className={classes.cardTitle}>Weekly down time for each server (minutes)</h4>
               <p className={classes.cardCategory}>
-                2019-02-24
+                {moment().format("YYYY-MM-DD")}
               </p>
             </CardBody>
             <CardFooter chart>
               <div className={classes.stats}>
-                <AccessTime /> last update at 10:25:33
+                <AccessTime /> last update 1 minute ago
               </div>
             </CardFooter>
           </Card>
